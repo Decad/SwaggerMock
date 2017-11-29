@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -18,19 +19,17 @@ namespace SwaggerMock
         {
             var swagger = app.ApplicationServices.GetService<SwaggerDocument>();
 
+            var routeValidatorFactory = new RouteValidatorFactory();
             var routeBuilder = new RouteBuilder(app);
 
             foreach (var path in swagger.Paths)
             {
-                foreach (var op in path.Value.Keys)
+                foreach (var method in path.Value.Keys)
                 {
-                    if (op == SwaggerOperationMethod.Get)
-                    {
-                        routeBuilder.MapGet($"{swagger.BasePath.Substring(1)}{path.Key}", context =>
-                        {
-                            return context.Response.WriteAsync("Ok");
-                        });
-                    }
+                    routeBuilder.MapVerb(
+                        Enum.GetName(typeof(SwaggerOperationMethod), method),
+                        $"{swagger.BasePath.Substring(1)}{path.Key}",
+                        routeValidatorFactory.GetValidatorDelegate(method, path.Value[method]));
                 }
             }
 
