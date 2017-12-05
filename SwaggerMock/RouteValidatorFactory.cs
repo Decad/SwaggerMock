@@ -35,6 +35,7 @@ namespace SwaggerMock
         public List<SwaggerParameterError> Validate(HttpContext context, SwaggerOperation operation)
         {
             var errors = new List<SwaggerParameterError>();
+
             foreach (var param in operation.Parameters)
             {
                 if (param.Kind == SwaggerParameterKind.Path)
@@ -48,7 +49,28 @@ namespace SwaggerMock
                         });
                     }
 
-                    if (param.IsRequired && !ValidType(param.Type, value))
+                    if (value != null && !ValidType(param.Type, value))
+                    {
+                        errors.Add(new SwaggerParameterError
+                        {
+                            Message = $"Invalid parameter type. Expected {param.Name} to be {param.Type}",
+                        });
+                    }
+                }
+
+                if (param.Kind == SwaggerParameterKind.Query)
+                {
+                    if (!context.Request.Query.TryGetValue(param.Name, out var value))
+                    {
+                        if (param.IsRequired)
+                        {
+                            errors.Add(new SwaggerParameterError
+                            {
+                                Message = $"Missing Required Parameter {param.Name}",
+                            });
+                        }
+                    }
+                    else if (!ValidType(param.Type, value))
                     {
                         errors.Add(new SwaggerParameterError
                         {
@@ -59,7 +81,7 @@ namespace SwaggerMock
 
                 if(param.Kind == SwaggerParameterKind.Body)
                 {
-                    //TODO check content type and swagger def
+                    // TODO check content type and swagger def
                     var body = ReadBody(context.Request.Body);
                     if (param.IsRequired && string.IsNullOrEmpty(body))
                     {
@@ -71,6 +93,8 @@ namespace SwaggerMock
 
                     if (!string.IsNullOrEmpty(body))
                     {
+                        param.Schema.AllowAdditionalProperties = false;
+                        param.ActualSchema.AllowAdditionalProperties = false;
                         var validationErrors = param.Schema.Validate(body);
                         if (validationErrors.Any())
                         {
@@ -83,6 +107,14 @@ namespace SwaggerMock
                 }
             }
 
+            errors.AddRange(context.Request.Query.Where(x => operation.Parameters
+                    .Where(p => p.Kind == SwaggerParameterKind.Query)
+                    .All(c => c.Name != x.Key))
+                    .Select(queryString => new SwaggerParameterError
+                    {
+                        Message = $"NoAdditionalQueryStringsAllowed: {queryString.Key}",
+                    }));
+
             return errors;
         }
 
@@ -93,34 +125,36 @@ namespace SwaggerMock
                 switch (paramType)
                 {
                     case JsonObjectType.None:
-                        break;
                     case JsonObjectType.Array:
                         break;
                     case JsonObjectType.Boolean:
+                        var valb = Convert.ToBoolean(value);
                         break;
                     case JsonObjectType.Integer:
-                        var val = Convert.ToInt32(value);
-                        return true;
-                    case JsonObjectType.Null:
+                        var vali = Convert.ToInt32(value);
                         break;
+                    case JsonObjectType.Null:
+                        return value == null;
                     case JsonObjectType.Number:
+                        var valn = Convert.ToDouble(value);
                         break;
                     case JsonObjectType.Object:
-                        break;
+                        return value != null;
                     case JsonObjectType.String:
+                        var vals = Convert.ToString(value);
                         break;
                     case JsonObjectType.File:
+                        // TODO How do we handle this
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(paramType), paramType, null);
                 }
+                return true;
             }
             catch (Exception)
             {
                 return false;
             }
-
-            return false;
         }
 
         private string ReadBody(Stream stream)

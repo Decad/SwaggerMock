@@ -50,6 +50,18 @@ namespace SwaggerMock.Tests
         }
 
         [TestMethod]
+        public async Task Should_Validate_QueryString_Parameters()
+        {
+            var res = await _mockServer.Client.GetAsync("/api/pets/?invalid=true");
+            var response = await res.Content.ReadAsStringAsync();
+            var errors = JsonConvert.DeserializeObject<List<SwaggerParameterError>>(response);
+
+            Assert.IsFalse(res.IsSuccessStatusCode);
+            Assert.IsTrue(errors.Count == 1);
+            Assert.AreEqual("NoAdditionalQueryStringsAllowed: invalid", errors[0].Message);
+        }
+
+        [TestMethod]
         public async Task Should_Validate_Required_Body_Parameters()
         {
             var res = await _mockServer.Client.PostAsync("/api/pets/", new StringContent(string.Empty));
@@ -69,8 +81,20 @@ namespace SwaggerMock.Tests
             var errors = JsonConvert.DeserializeObject<List<SwaggerParameterError>>(response);
 
             Assert.IsFalse(res.IsSuccessStatusCode);
-            Assert.IsTrue(errors.Count == 1);
+            Assert.IsTrue(errors.Count == 2);
             Assert.AreEqual("PropertyRequired: #/name", errors[0].Message);
+        }
+
+        [TestMethod]
+        public async Task Should_Validate_Invalid_Body_Parameters_And_Properties()
+        {
+            var res = await _mockServer.Client.PostAsync("/api/pets/", new StringContent(@"{ ""name"": ""cat"", ""invalid"": ""prop""}"));
+            var response = await res.Content.ReadAsStringAsync();
+            var errors = JsonConvert.DeserializeObject<List<SwaggerParameterError>>(response);
+
+            Assert.IsFalse(res.IsSuccessStatusCode);
+            Assert.IsTrue(errors.Count == 1);
+            Assert.AreEqual("NoAdditionalPropertiesAllowed: #/invalid", errors[0].Message);
         }
     }
 }
