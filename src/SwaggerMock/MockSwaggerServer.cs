@@ -22,6 +22,5 @@ namespace SwaggerMock
         }
 
         public HttpClient Client => _server.CreateClient();
-
     }
 }

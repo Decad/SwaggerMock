@@ -1,0 +1,31 @@
+version: '{build}'
+image: Visual Studio 2017
+pull_requests:  
+  do_not_increment_build_number: true
+branches:  
+  only:
+  - master
+nuget:  
+  disable_publish_on_pr: true
+init:
+  - cmd: git config --global core.autocrlf true
+build_script:
+- ps: .\Build.ps1
+artifacts:
+- path: .\src\SwaggerMock\artifacts\**\*.nupkg
+  name: NuGet
+deploy:
+- provider: NuGet
+  server: https://www.myget.org/F/swagger-mock/api/v2/package
+  api_key:
+    secure: Clg9zSv3ApzcGJKCreJaFgxn5NGgTEwxkMj3OwoWAjMMFIQ1BgFyzrcACA/dAn5x
+  skip_symbols: true
+  on:
+    branch: master
+- provider: NuGet
+  name: production
+  skip_symbols: true
+  api_key:
+    secure: VzJKkcQiedfCVbCkDdGR2fGgbrJyRNr2RJt5kcOdB/vvan+XTm8zg3C68+YLV3Bw
+  on:
+    appveyor_repo_tag: true
