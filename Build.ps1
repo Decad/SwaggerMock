@@ -37,7 +37,7 @@ echo "build: Package version suffix is $suffix"
 echo "build: Build version suffix is $buildSuffix" 
 echo "build: Version suffix is $versionSuffix" 
 
-<#
+
 exec { & dotnet build SwaggerMock.sln -c Release --version-suffix=$buildSuffix -v q /nologo }
 
 Push-Location -Path .\test\SwaggerMock.Tests
@@ -47,4 +47,3 @@ exec { & dotnet test -c Release }
 Pop-Location
 
 exec { & dotnet pack .\src\SwaggerMock\SwaggerMock.csproj -c Release -o .\artifacts --include-symbols --no-build $versionSuffix }
-#>
