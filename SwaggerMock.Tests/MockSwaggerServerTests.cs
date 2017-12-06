@@ -96,5 +96,21 @@ namespace SwaggerMock.Tests
             Assert.IsTrue(errors.Count == 1);
             Assert.AreEqual("NoAdditionalPropertiesAllowed: #/invalid", errors[0].Message);
         }
+
+        [TestMethod]
+        public async Task Should_Validate_Valid_Array_QueryString()
+        {
+            var res = await _mockServer.Client.GetAsync("/api/pets/?tags=cat,dog");
+            var response = await res.Content.ReadAsStringAsync();
+            Assert.IsTrue(res.IsSuccessStatusCode);
+        }
+
+        [TestMethod]
+        public async Task Should_Validate_InValid_Array_QueryString()
+        {
+            var res = await _mockServer.Client.GetAsync("/api/pets/?ids=cat,goat");
+            var response = await res.Content.ReadAsStringAsync();
+            Assert.IsFalse(res.IsSuccessStatusCode);
+        }
     }
 }

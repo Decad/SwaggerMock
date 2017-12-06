@@ -53,6 +53,17 @@
                         "required": false,
                         "type": "integer",
                         "format": "int32"
+                    },
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "description": "ids to filter by",
+                        "required": false,
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv"
                     }
                 ],
                 "responses": {
