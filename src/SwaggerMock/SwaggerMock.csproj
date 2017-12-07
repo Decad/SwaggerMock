@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <VersionPrefix>0.0.2</VersionPrefix>
+    <VersionPrefix>0.0.3-alpha</VersionPrefix>
     <Authors>Declan Cook</Authors>
     <Company />
     <Description>Create a mock server from a swagger document that validates all requests</Description>
