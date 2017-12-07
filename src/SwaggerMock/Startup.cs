@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,9 +25,16 @@ namespace SwaggerMock
             {
                 foreach (var method in path.Value.Keys)
                 {
+                    var routeTemplate = $"{swagger.BasePath}{path.Key}";
+                    if (routeTemplate.StartsWith("/"))
+                    {
+                        var leadingSlashes = new Regex("^/+");
+                        routeTemplate = leadingSlashes.Replace(routeTemplate, string.Empty);
+                    }
+
                     routeBuilder.MapVerb(
                         Enum.GetName(typeof(SwaggerOperationMethod), method),
-                        $"{swagger.BasePath.Substring(1)}{path.Key}",
+                        routeTemplate,
                         routeValidatorFactory.GetValidatorDelegate(method, path.Value[method]));
                 }
             }
